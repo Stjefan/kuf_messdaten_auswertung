@@ -6,11 +6,11 @@ from uuid import UUID
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from models import Messpunkt, Immissionsort, EinstellungenRichtungsdaten
-from messdaten.azure import MessdatenServiceV3
-from db_insert import insert_baulaermauswertung_via_psycopg2, ErgebnisseBaulaerm, DTO_Detected, DTO_LrPegel, DTO_Rejected, DTO_TaktmaximalpegelRichtungsgewertet
+from .models import Messpunkt, Immissionsort, EinstellungenRichtungsdaten
+from .messdaten.azure import MessdatenServiceV3
+from .db_insert import insert_baulaermauswertung_via_psycopg2, ErgebnisseBaulaerm, DTO_Detected, DTO_LrPegel, DTO_Rejected, DTO_TaktmaximalpegelRichtungsgewertet
 
-from constants import terzfrequenzen, indexed_cols_directions_vertical
+from .constants import terzfrequenzen, indexed_cols_directions_vertical
 
 def simple_direction_weighting(mps: List[Messpunkt], df_resu, df_terz, df_dir, gewertete_sektionen: List[range]):
     dataframes_resu = []
