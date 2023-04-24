@@ -1,0 +1,1 @@
+pip install "kuf_messdaten_auswertung @ git+https://github.com/Stjefan/kuf_messdaten_auswertung.git"
