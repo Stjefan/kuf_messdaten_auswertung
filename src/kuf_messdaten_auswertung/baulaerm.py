@@ -187,7 +187,7 @@ def random_erkennung(alle_messdaten: pd.DataFrame):
     return result
 
 
-def erstelle_ergebnisse(arg_ios, laermkategorisierung_an_immissionsorten_reloaded, lr_result_dict, beurteilungsrelevante_taktmaximalpegel_nach_laermursache, rejection_df: pd.DataFrame, number_fully_available_seconds,
+def erstelle_ergebnisse(arg_mps, arg_ios, laermkategorisierung_an_immissionsorten_reloaded, lr_result_dict, beurteilungsrelevante_taktmaximalpegel_nach_laermursache, rejection_df: pd.DataFrame, number_fully_available_seconds,
                         number_non_dropped_seconds, number_counted_seconds, project_id):
     taktmaximalpegel_list = []
     lr_pegel_list = []
@@ -305,6 +305,7 @@ def erstelle_baulaerm_auswertung(arg_mps, arg_ios, laermkategorisierung_an_immis
             lr_dict[io.Id] = beurteilungspegel_an_io
 
         erstelle_ergebnisse(
+            arg_mps,
             arg_ios,
             laermkategorisierung_an_immissionsorten_reloaded,
             lr_dict, beurteilungsrelevante_taktmaximalpegel_nach_laermursache,
