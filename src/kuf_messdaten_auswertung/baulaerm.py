@@ -314,15 +314,19 @@ def erstelle_baulaerm_auswertung(arg_mps, arg_ios, laermkategorisierung_an_immis
             project_id
         )
 
-def get_project_data():
+def get_project_data(richtungsdaten_settings = [(0,33), (10, 25), (0, 33), (0, 33)]):
+    r1 = EinstellungenRichtungsdaten(richtungsdaten_settings[0][0], richtungsdaten_settings[0][1])
+    r2 = EinstellungenRichtungsdaten(richtungsdaten_settings[1][0], richtungsdaten_settings[1][1])
+    r3 = EinstellungenRichtungsdaten(richtungsdaten_settings[2][0], richtungsdaten_settings[2][1])
+    r4 = EinstellungenRichtungsdaten(richtungsdaten_settings[3][0], richtungsdaten_settings[3][1])
     mp1 = Messpunkt(1, id_in_db=UUID(
-        "16b2a784-8b6b-4b7e-9abf-fd2d5a8a0091"), Ereignisse=["Unkategorisiert"], einstellungen_richtunsdaten=EinstellungenRichtungsdaten(0, 33))
+        "16b2a784-8b6b-4b7e-9abf-fd2d5a8a0091"), Ereignisse=["Unkategorisiert"], einstellungen_richtunsdaten=r1)
     mp2 = Messpunkt(2, id_in_db=UUID(
-        "965157eb-ab17-496f-879a-55ce924f6252"), Ereignisse=["Unkategorisiert"], einstellungen_richtunsdaten=EinstellungenRichtungsdaten(10, 25))
+        "965157eb-ab17-496f-879a-55ce924f6252"), Ereignisse=["Unkategorisiert"], einstellungen_richtunsdaten=r2)
     mp3 = Messpunkt(3, id_in_db=UUID(
-        "d0aa76cf-36e8-43d1-bb62-ff9cc2c275c0"), Ereignisse=["Unkategorisiert"], einstellungen_richtunsdaten=EinstellungenRichtungsdaten(0, 33))
+        "d0aa76cf-36e8-43d1-bb62-ff9cc2c275c0"), Ereignisse=["Unkategorisiert"], einstellungen_richtunsdaten=r3)
     mp4 = Messpunkt(4, id_in_db=UUID(
-        "ab4e7e2d-8c39-48c2-b80c-b80f6b619657"), Ereignisse=["Unkategorisiert"], einstellungen_richtunsdaten=EinstellungenRichtungsdaten(0, 33))
+        "ab4e7e2d-8c39-48c2-b80c-b80f6b619657"), Ereignisse=["Unkategorisiert"], einstellungen_richtunsdaten=r4)
 
     io1 = Immissionsort(1, id_in_db=UUID("c4862493-478b-49ec-ba03-a779551bf575"))
     io2 = Immissionsort(2, id_in_db=UUID("f4311d0b-cd3a-4cf1-a0df-d4f1a5edbef7"))
@@ -402,8 +406,8 @@ def get_project_data():
     return _mps, _ios, _laermkategorisierung_an_immissionsorten_reloaded, _ausbreitungsfaktoren
     
 
-def erstelle_auswertung_baulaerm_exported(from_date):
-    _mps, _ios, laermkategorisierung_an_ios, _ausbreitungsfaktoren = get_project_data()
+def erstelle_auswertung_baulaerm_exported(from_date, richtungsdaten_settings = [(0,33), (10, 25), (0, 33), (0, 33)]):
+    _mps, _ios, laermkategorisierung_an_ios, _ausbreitungsfaktoren = get_project_data(richtungsdaten_settings)
     erstelle_baulaerm_auswertung(_mps, _ios, laermkategorisierung_an_ios, _ausbreitungsfaktoren, from_date, "8d7e0d22-620c-45b4-ac38-25b63ddf79e0")
 
 
