@@ -12,7 +12,7 @@ from psycopg2.extras import execute_values
 import os
 from dotenv import load_dotenv
 
-from constants import get_start_end_beurteilungszeitraum_from_datetime
+from .constants import get_start_end_beurteilungszeitraum_from_datetime
 
 # Connect to an existing database
 load_dotenv()

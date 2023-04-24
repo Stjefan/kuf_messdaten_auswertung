@@ -211,10 +211,10 @@ def erstelle_ergebnisse(arg_mps, arg_ios, laermkategorisierung_an_immissionsorte
                 for idx, val in beurteilungspegel_an_io[col].items():
                     lr_pegel_list.append(DTO_LrPegel(
                         idx, val, id_verursacher, io.id_in_db))
-
-    for idx, r in beurteilungsrelevante_taktmaximalpegel_nach_laermursache.iterrows():
-        for mp, e in [(mp, f"{mp.Id}_{e}_TAKT") for mp in _mps for e in mp.Ereignisse]:
-            pass
+    if False:
+        for idx, r in beurteilungsrelevante_taktmaximalpegel_nach_laermursache.iterrows():
+            for mp, e in [(mp, f"{mp.Id}_{e}_TAKT") for mp in arg_mps for e in mp.Ereignisse]:
+                pass
             # taktmaximalpegel_list.append(
             #     DTO_TaktmaximalpegelRichtungsgewertet(idx, r[e], mp.id_in_db))
     print("LrPegel", len(lr_pegel_list))
