@@ -4,7 +4,7 @@ import uuid
 import psycopg2
 from pgcopy import CopyManager
 from datetime import datetime, timedelta
-from models import Auswertungsergebnis, Detected, LrPegel, Ergebnisse, DTO_LrPegel, ErgebnisseBaulaerm, DTO_Detected, DTO_Rejected, DTO_TaktmaximalpegelRichtungsgewertet
+from .models import Auswertungsergebnis, Detected, LrPegel, Ergebnisse, DTO_LrPegel, ErgebnisseBaulaerm, DTO_Detected, DTO_Rejected, DTO_TaktmaximalpegelRichtungsgewertet
 import requests
 import logging
 import sys
