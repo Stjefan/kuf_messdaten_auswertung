@@ -7,7 +7,7 @@ import pandas as pd
 from datetime import datetime
 import numpy as np
 from kuf_messdaten_auswertung.constants import terzfrequenzen, cols_directions_horizontal, cols_directions_vertical, indexed_cols_directions_horizontal, indexed_cols_directions_vertical
-from models import Messpunkt
+from kuf_messdaten_auswertung.models import Messpunkt
 
 import pytz
 
