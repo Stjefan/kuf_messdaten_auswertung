@@ -1,4 +1,0 @@
-pandas
-psycopg2
-pgcopy
-sqlalchemy
