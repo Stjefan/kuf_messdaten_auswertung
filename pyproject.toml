@@ -19,7 +19,9 @@ dependencies = [
     "pandas",
     "psycopg2",
     "pgcopy",
-    "sqlalchemy"
+    "sqlalchemy",
+    "stumpy",
+    "requests",
 
 ]
 

@@ -43,6 +43,9 @@ if True:
             q = f"select {','.join(cols)}, time from \"dauerauswertung_richtungswertungsvantek\" where messpunkt_id = '{messpunkt.id_in_db}'::uuid and time >= '{from_date.astimezone()}' and time < '{to_date.astimezone()}' ORDER BY TIME"
             direction_df = pd.read_sql(q, self.dbConnection)
 
+            if len(direction_df) == 0:
+                    raise ValueError(f"Missing data for {messpunkt.id_in_db}")
+
             data_dict = {
                 "time": "Timestamp",
                 "estimated_1": f"E{messpunkt.id}_estimated_1",
@@ -92,7 +95,8 @@ if True:
             resu_df = pd.read_sql(
             q, self.dbConnection)
 
-            
+            if len(resu_df) == 0:
+                    raise ValueError(f"Missing data for {messpunkt.id_in_db}")
             data_dict = {
                 "lafeq": f"R{messpunkt.id}_LAFeq",
                 "lafmax": f"R{messpunkt.id}_LAFmax",
@@ -169,7 +173,8 @@ if True:
                 logging.info(q)
                 terz_df = pd.read_sql(q, self.dbConnection)
 
-
+                if len(terz_df) == 0:
+                    raise ValueError(f"Missing data for {messpunkt.id_in_db}")
 
                 terz_df.rename(columns={"hz20": f"T{messpunkt.id}_LZeq20", "hz25": f"T{messpunkt.id}_LZeq25", "hz31_5": f"T{messpunkt.id}_LZeq31_5", "hz40": f"T{messpunkt.id}_LZeq40", "hz50": f"T{messpunkt.id}_LZeq50", "hz63": f"T{messpunkt.id}_LZeq63", "hz80": f"T{messpunkt.id}_LZeq80", "hz100": f"T{messpunkt.id}_LZeq100", "hz125": f"T{messpunkt.id}_LZeq125", "hz160": f"T{messpunkt.id}_LZeq160",
                                         "hz200": f"T{messpunkt.id}_LZeq200", "hz250": f"T{messpunkt.id}_LZeq250", "hz315": f"T{messpunkt.id}_LZeq315", "hz400": f"T{messpunkt.id}_LZeq400", "hz500": f"T{messpunkt.id}_LZeq500", "hz630": f"T{messpunkt.id}_LZeq630", "hz800": f"T{messpunkt.id}_LZeq800", "hz1000": f"T{messpunkt.id}_LZeq1000", "hz1250": f"T{messpunkt.id}_LZeq1250", "hz1600": f"T{messpunkt.id}_LZeq1600",
@@ -203,6 +208,9 @@ if True:
             }
             mete_df = pd.read_sql(f"select time, rain, temperature, windspeed, pressure, humidity, winddirection from \"dauerauswertung_mete\" where messpunkt_id = '{messpunkt.id_in_db}'::uuid and time >= '{from_date.astimezone()}' and time < '{to_date.astimezone()}' ORDER BY TIME", self.dbConnection)
 
+            if len(mete_df) == 0:
+                    raise ValueError(f"Missing data for {messpunkt.id_in_db}")
+            
             mete_df.rename(columns=rename_dict, inplace=True)
 
             mete_df['Timestamp'] = mete_df['Timestamp'].dt.tz_convert('Europe/Berlin')

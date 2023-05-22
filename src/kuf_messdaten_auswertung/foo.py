@@ -39,7 +39,7 @@ def get_project_via_rest(name: str) -> Projekt:
     }
 
 
-    if name == 'Test-3':
+    if name == 'Immendingen':
         p = requests.get(f"http://localhost:8000/dauerauswertung/projekt/{name}/", timeout=30)
         p.raise_for_status()
         projekt_json = p.json()
@@ -74,10 +74,10 @@ def get_project_via_rest(name: str) -> Projekt:
                     dict_abf_io_ereignis[(io.Id, e)] = dict_abf[(io.Id, mp.id)] # 0 # abfs[(io.Id, mp.Id)]
         filters = dict(zip([el["name"] for el in projekt_json["rejections"]], projekt_json["rejections"])) 
         ursachen_an_ios = dict(zip([custom_zuordnung[el["name"]] for el in projekt_json["laermursacheanimmissionsorten_set"]], projekt_json["laermursacheanimmissionsorten_set"])) 
-        p1 = Projekt(projekt_json['name'], ios, mps, abfs, "blub", has_mete_data=has_mete_data, dict_abf_io_ereignis = dict_abf_io_ereignis, id_in_db =  projekt_json["id"],ursachen_an_ios=ursachen_an_ios, filter_mit_ids=filters)
+        p1 = Projekt(projekt_json['name'], ios, mps, abfs, "blub", has_mete_data=has_mete_data, dict_abf_io_ereignis = dict_abf_io_ereignis, id_in_db =  projekt_json["id"],ursachen_an_ios=ursachen_an_ios, filter_mit_ids=filters, id_messpunkt_at_mete_station=UUID("50f6a165-3f76-4d26-9f55-1d559e0e6fc8"))
         
         return p1
-    elif name == 'Test-2':
+    elif name == 'Mannheim':
         p = requests.get(f"http://localhost:8000/dauerauswertung/projekt/{name}/", timeout=30)
         p.raise_for_status()
         projekt_json = p.json()

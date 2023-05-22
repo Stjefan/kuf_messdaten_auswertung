@@ -1,12 +1,12 @@
 import logging
 import sys
 from datetime import datetime
-from kuf_messdaten_auswertung.baulaerm.v2 import erstelle_baulaerm_auswertung # import get_project_data, erstelle_baulaerm_auswertung
-from kuf_messdaten_auswertung.baulaerm.shared import get_project_data
-from kuf_messdaten_auswertung.foo import get_project_via_rest
-from kuf_messdaten_auswertung.default.v1 import werte_beurteilungszeitraum_aus
-from kuf_messdaten_auswertung.db_insert import insert_auswertung_via_psycopg2
-from kuf_messdaten_auswertung.models import Ergebnisse
+from src.kuf_messdaten_auswertung.baulaerm.v2 import erstelle_baulaerm_auswertung # import get_project_data, erstelle_baulaerm_auswertung
+from src.kuf_messdaten_auswertung.baulaerm.shared import get_project_data
+from src.kuf_messdaten_auswertung.foo import get_project_via_rest
+from src.kuf_messdaten_auswertung.default.v1 import werte_beurteilungszeitraum_aus
+from src.kuf_messdaten_auswertung.db_insert import insert_auswertung_via_psycopg2
+from src.kuf_messdaten_auswertung.models import Ergebnisse
 import uuid
 
 FORMAT = '%(filename)s %(lineno)d %(asctime)s %(levelname)s %(message)s'
@@ -15,6 +15,7 @@ logging.basicConfig(
     format=FORMAT,
     handlers=[
         logging.StreamHandler(sys.stdout),
+        logging.FileHandler("default.log")
     ])
 
 
@@ -23,7 +24,7 @@ if False:
     insert_auswertung_via_psycopg2(t, Ergebnisse(t, t, 0, 0, 0, [], [], [] ,[] ,[], uuid.UUID('4c7be8b7-5515-4ab1-9b49-c5208ff87c08')))
 
 if True:
-    for d in range(10, 25+1):
+    for d in range(17, 21+1):
     # get_project_via_rest("abc")
         for h in [
             0, 1, 2, 3, 4, 5, 
@@ -32,8 +33,8 @@ if True:
                 23]:
             try:
                 current_time = datetime.now()
-                ausgewerteter_zeitpunkt = datetime(2023, 4, d, h, 30, 0)
-                result = werte_beurteilungszeitraum_aus(ausgewerteter_zeitpunkt, "Test-2")
+                ausgewerteter_zeitpunkt = datetime(2023, 5, d, h, 30, 0)
+                result = werte_beurteilungszeitraum_aus(ausgewerteter_zeitpunkt, "Immendingen")
                 insert_auswertung_via_psycopg2(ausgewerteter_zeitpunkt, result)
             except Exception as ex:
                 logging.exception(ex)

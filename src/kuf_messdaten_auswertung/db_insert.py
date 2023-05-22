@@ -13,7 +13,7 @@ import os
 from dotenv import load_dotenv
 
 from .constants import get_start_end_beurteilungszeitraum_from_datetime
-
+from .baulaerm.shared import get_beurteilungszeitraum_zeitfenster
 # Connect to an existing database
 load_dotenv()
 print("ENV:", os.getenv("POSTGRES_CS"))
@@ -158,7 +158,7 @@ def insert_baulaermauswertung_via_psycopg2(time, ergebnis: ErgebnisseBaulaerm):
         CS)
     cursor = conn.cursor()
     
-    from_date, to_date = get_start_end_beurteilungszeitraum_from_datetime(time)
+    from_date, to_date = get_beurteilungszeitraum_zeitfenster(time)
 
     delete_old_baulaerm_data_via_psycopg2(cursor, get_id_old_baulaerm_auswertungslauf(cursor, ergebnis.zuordnung, from_date, to_date), from_date, to_date)
     insert_new_baulaerm_auswertung(cursor, from_date, to_date, ergebnis)

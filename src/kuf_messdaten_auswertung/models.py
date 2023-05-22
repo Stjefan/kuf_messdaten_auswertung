@@ -94,6 +94,7 @@ class Projekt:
     id_in_db: int = 0
     ursachen_an_ios: dict = field(default_factory=defaultdict)
     filter_mit_ids: dict = field(default_factory=defaultdict)
+    id_messpunkt_at_mete_station: Optional[UUID] = None
 
 @dataclass
 class ProjektBaulaerm:
@@ -120,7 +121,7 @@ class DTO_LrPegel:
 class DTO_Rejected:
     time: datetime
     grund: str
-    # messpunkt: UUID
+    messpunkt: Optional[UUID] = None
 
 @dataclass
 class DTO_Detected:
