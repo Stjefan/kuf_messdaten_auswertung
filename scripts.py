@@ -24,7 +24,7 @@ if False:
     insert_auswertung_via_psycopg2(t, Ergebnisse(t, t, 0, 0, 0, [], [], [] ,[] ,[], uuid.UUID('4c7be8b7-5515-4ab1-9b49-c5208ff87c08')))
 
 if True:
-    for d in range(17, 21+1):
+    for d in range(15, 20+1):
     # get_project_via_rest("abc")
         for h in [
             0, 1, 2, 3, 4, 5, 
@@ -34,7 +34,7 @@ if True:
             try:
                 current_time = datetime.now()
                 ausgewerteter_zeitpunkt = datetime(2023, 5, d, h, 30, 0)
-                result = werte_beurteilungszeitraum_aus(ausgewerteter_zeitpunkt, "Immendingen")
+                result = werte_beurteilungszeitraum_aus(ausgewerteter_zeitpunkt, "Immendingen", "http://localhost:8000/")
                 insert_auswertung_via_psycopg2(ausgewerteter_zeitpunkt, result)
             except Exception as ex:
                 logging.exception(ex)

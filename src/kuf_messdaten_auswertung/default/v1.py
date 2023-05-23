@@ -649,7 +649,7 @@ def bestimme_rechenwert_verwertbare_sekunden(messwerte_nach_filtern_df):
     return verwertbare_messwerte_df, anzahl_verwertbare_sekunden
 
 
-def werte_beurteilungszeitraum_aus(datetime_in_beurteilungszeitraum: datetime, project_name: str):
+def werte_beurteilungszeitraum_aus(datetime_in_beurteilungszeitraum: datetime, project_name: str, server_url: str):
     
     from_date,to_date = get_start_end_beurteilungszeitraum_from_datetime(datetime_in_beurteilungszeitraum)
 
@@ -660,7 +660,7 @@ def werte_beurteilungszeitraum_aus(datetime_in_beurteilungszeitraum: datetime, p
     if True:
         
         
-        p = get_project_via_rest(project_name)
+        p = get_project_via_rest(project_name, server_url)
         print(p)
         lrpegel_set = []
         maxpegel_set = []
