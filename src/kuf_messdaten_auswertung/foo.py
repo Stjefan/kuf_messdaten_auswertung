@@ -38,11 +38,13 @@ def get_project_via_rest(name: str, server_url: str) -> Projekt:
         'Gesamt': 'Gesamt'
     }
 
+    p = requests.get(f"{server_url}/dauerauswertung/projekt/{name}/", timeout=30)
+    p.raise_for_status()
+    projekt_json = p.json()
+
 
     if name == 'Immendingen':
-        p = requests.get(f"{server_url}/dauerauswertung/projekt/{name}/", timeout=30)
-        p.raise_for_status()
-        projekt_json = p.json()
+        
         print(mappe_laermursachen_mp_2_io(projekt_json))
         idx = 0
 
@@ -78,9 +80,6 @@ def get_project_via_rest(name: str, server_url: str) -> Projekt:
         
         return p1
     elif name == 'Mannheim':
-        p = requests.get(f"http://localhost:8000/dauerauswertung/projekt/{name}/", timeout=30)
-        p.raise_for_status()
-        projekt_json = p.json()
         print(mappe_laermursachen_mp_2_io(projekt_json))
         idx = 0
 
