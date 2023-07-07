@@ -55,7 +55,7 @@ class Messpunkt:
     OrdnerMessdaten: str = ""
     column_lr: str = "N/A"
     
-    einstellungen_richtunsdaten: EinstellungenRichtungsdaten = None
+    einstellungen_richtunsdaten: Optional[EinstellungenRichtungsdaten] = None
     
     
 @dataclass
@@ -87,10 +87,10 @@ class Projekt:
     name_in_db: str
     has_mete_data: bool = False
     has_terz_data: bool = False
-    mete_station: Messpunkt = None
+    mete_station: Optional[Messpunkt] = None
     gw_lafeq: float = 90
     gw_lafmax: float = 100
-    dict_abf_io_ereignis: dict = None
+    dict_abf_io_ereignis: Optional[dict] = None
     id_in_db: int = 0
     ursachen_an_ios: dict = field(default_factory=defaultdict)
     filter_mit_ids: dict = field(default_factory=defaultdict)
@@ -137,6 +137,24 @@ class DTO_TaktmaximalpegelRichtungsgewertet:
     verursacht_durch: UUID
 
 @dataclass
+class FremdgeraeuschMittelungspegel:
+    time: datetime
+    pegel: float
+    verursacht_durch: UUID
+
+@dataclass
+class FremdgeraeuschLrpegel:
+    time: datetime
+    pegel: float
+    verursacht_durch: UUID
+
+@dataclass
+class MesspunktLrpegel:
+    time: datetime
+    pegel: float
+    verursacht_durch: UUID
+
+@dataclass
 class DTO_Maxpegel:
     time: datetime
     pegel: float
@@ -174,6 +192,9 @@ class ErgebnisseBaulaerm:
     rejected_set: list[DTO_Rejected]
     richtungsgewertetertaktmaximalpegel_set: list[DTO_TaktmaximalpegelRichtungsgewertet]
     zuordnung: UUID
+    running_mean_fremdgeraeusche_list: list[FremdgeraeuschMittelungspegel]
+    lr_fremdgeraeusche_list: list[FremdgeraeuschLrpegel]
+    lr_messpunkt_list: list[MesspunktLrpegel]
 
 
 @dataclass

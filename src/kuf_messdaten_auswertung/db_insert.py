@@ -4,7 +4,12 @@ import uuid
 import psycopg2
 from pgcopy import CopyManager
 from datetime import datetime, timedelta
-from .models import Auswertungsergebnis, Detected, LrPegel, Ergebnisse, DTO_LrPegel, ErgebnisseBaulaerm, DTO_Detected, DTO_Rejected, DTO_TaktmaximalpegelRichtungsgewertet
+from .models import (
+    Auswertungsergebnis, Detected, LrPegel, 
+    Ergebnisse, DTO_LrPegel, ErgebnisseBaulaerm, DTO_Detected, DTO_Rejected,
+    DTO_TaktmaximalpegelRichtungsgewertet, FremdgeraeuschMittelungspegel, FremdgeraeuschLrpegel,
+    MesspunktLrpegel
+)
 import requests
 import logging
 import sys
@@ -16,7 +21,7 @@ from .constants import get_start_end_beurteilungszeitraum_from_datetime
 from .baulaerm.shared import get_beurteilungszeitraum_zeitfenster
 # Connect to an existing database
 load_dotenv()
-print("ENV:", os.getenv("POSTGRES_CS"))
+# logging.info(f"ENV: {os.getenv('POSTGRES_CS')}")
 CS = os.getenv("POSTGRES_CS")
 
 app_name = "dauerauswertung" # "tsdb"
@@ -31,60 +36,58 @@ def delete_old_data_via_psycopg2(cursor, ids_old_auswertungslauf, from_date, to_
                         """
                 #  DELETE FROM {app_name}_{tbl} WHERE time >= '{from_date}' and time <= '{to_date}' and berechnet_von_id = {id_old_auswertungslauf};
                 cursor.execute(q1)
-                print(q1)
+                logging.info(q1)
                 if False:
                     q2 = f"SELECT drop_chunks('{app_name}_{tbl}', '{to_date + timedelta(hours=0)}', '{from_date + timedelta(hours=-0)}');"
                     
-                    print(q2)
+                    logging.info(q2)
                     cursor.execute(q2)
             q1 = f"""DELETE FROM {app_name}_Auswertungslauf WHERE id = '{id_old_auswertungslauf}'::uuid"""
-            print(q1)
+            logging.info(q1)
             cursor.execute(q1)
     
 def delete_old_baulaerm_data_via_psycopg2(cursor, ids_old_auswertungslauf, from_date, to_date):
-    print(ids_old_auswertungslauf)
+    logging.info(ids_old_auswertungslauf)
     if True:
         for id_old_auswertungslauf in ids_old_auswertungslauf:
-            for tbl in ["dauerauswertung_beurteilungspegelbaulaerm", "dauerauswertung_richtungungsgewertetertaktmaximalpegel"]:
+            for tbl in [
+                "dauerauswertung_beurteilungspegelbaulaerm", "dauerauswertung_richtungungsgewertetertaktmaximalpegel", 
+                "dauerauswertung_baustellenumgebungspegel", "dauerauswertung_baustellenbeurteilungspegel", "dauerauswertung_baustellenbeurteilungspegelumgebung"
+                ]:
                 q1 = f"""
                         DELETE FROM {tbl} WHERE berechnet_von_id = '{id_old_auswertungslauf}'::uuid;
                         """
                 #  DELETE FROM {app_name}_{tbl} WHERE time >= '{from_date}' and time <= '{to_date}' and berechnet_von_id = {id_old_auswertungslauf};
                 cursor.execute(q1)
-                print(q1)
+                logging.info(q1)
             for tbl in ["dauerauswertung_rejected", "dauerauswertung_detected"]:
                 q1 = f"""
                         DELETE FROM {tbl} WHERE berechnet_von_baulaerm_id = '{id_old_auswertungslauf}'::uuid;
                         """
                 #  DELETE FROM {app_name}_{tbl} WHERE time >= '{from_date}' and time <= '{to_date}' and berechnet_von_id = {id_old_auswertungslauf};
                 cursor.execute(q1)
-                print(q1)
-                if False:
-                    q2 = f"SELECT drop_chunks('{app_name}_{tbl}', '{to_date + timedelta(hours=0)}', '{from_date + timedelta(hours=-0)}');"
-                    
-                    print(q2)
-                    cursor.execute(q2)
+                logging.info(q1)
             q1 = f"""DELETE FROM dauerauswertung_auswertungslaufbaulaerm WHERE id = '{id_old_auswertungslauf}'::uuid"""
-            print(q1)
+            logging.info(q1)
             cursor.execute(q1)
 
 def get_id_old_auswertungslauf(cursor, zuordnung, from_date, to_date):
     q = f"""SELECT id FROM {app_name}_Auswertungslauf WHERE zeitpunkt_im_beurteilungszeitraum  >= '{from_date.astimezone()}' and zeitpunkt_im_beurteilungszeitraum <= '{to_date.astimezone()}' and zuordnung_id = '{zuordnung}'::uuid"""
-    print("Query", q)
+    logging.info("q")
     cursor.execute(q)
     
     result = cursor.fetchall()
 
-    print("OLD ID: ", result)
+    logging.info(f"OLD ID:  {result}")
     return [r[0] for r in result] if len(result) > 0 else []
 
 def get_id_old_baulaerm_auswertungslauf(cursor, zuordnung, from_date, to_date):
     q = f"""SELECT id FROM dauerauswertung_auswertungslaufbaulaerm WHERE zeitpunkt_im_beurteilungszeitraum  >= '{from_date.astimezone()}' and zeitpunkt_im_beurteilungszeitraum <= '{to_date.astimezone()}' and zuordnung_id = '{zuordnung}'::uuid"""
     cursor.execute(q)
-    print(q)
+    logging.info(q)
     result = cursor.fetchall()
 
-    print(result)
+    logging.info(result)
     return [r[0] for r in result] if len(result) > 0 else []
 
 def insert_new_baulaerm_auswertung(cursor, from_date, to_date, ergebnis: ErgebnisseBaulaerm):
@@ -103,16 +106,21 @@ def insert_new_baulaerm_auswertung(cursor, from_date, to_date, ergebnis: Ergebni
     rejected_set = [[i.time.isoformat(), i.grund, random_messpunkt_id, new_row_id] for i in ergebnis.rejected_set]
     detected_set = [[i.time.isoformat(), i.duration, i.messpunkt, 1, new_row_id] for i in ergebnis.detected_set]
     richtungsgewertetertaktmaximalpegel_set = [[i.time.isoformat(), i.pegel, i.verursacht_durch, new_row_id] for i in ergebnis.richtungsgewertetertaktmaximalpegel_set]
+    fremdgeraeusche_mittelungspegel_set =  [[i.time.isoformat(), i.pegel, i.verursacht_durch, new_row_id] for i in ergebnis.running_mean_fremdgeraeusche_list]
+    fremdgeraeusche_lr_set =  [[i.time.isoformat(), i.pegel, i.verursacht_durch, new_row_id] for i in ergebnis.lr_fremdgeraeusche_list]
+    messpunkt_lr_set = [[i.time.isoformat(), i.pegel, i.verursacht_durch, new_row_id] for i in ergebnis.lr_messpunkt_list]
 
     
-    # print("lr_arr", lr_arr)
+    # logging.info("lr_arr", lr_arr)
     execute_values(cursor, """INSERT INTO dauerauswertung_beurteilungspegelbaulaerm (time, pegel, immissionsort_id, laermursache_id, berechnet_von_id) VALUES %s""", lr_arr)
     execute_values(cursor, """INSERT INTO dauerauswertung_rejected (time, filter_id, messpunkt_id, berechnet_von_baulaerm_id) VALUES %s""", rejected_set)
     execute_values(cursor, """INSERT INTO dauerauswertung_richtungungsgewertetertaktmaximalpegel (time, pegel, messpunkt_id, berechnet_von_id) VALUES %s""", richtungsgewertetertaktmaximalpegel_set)
+    execute_values(cursor, """INSERT INTO dauerauswertung_baustellenumgebungspegel (time, pegel, messpunkt_id, berechnet_von_id) VALUES %s""", fremdgeraeusche_mittelungspegel_set)
+    execute_values(cursor, """INSERT INTO dauerauswertung_baustellenbeurteilungspegelumgebung (time, pegel, messpunkt_id, berechnet_von_id) VALUES %s""", fremdgeraeusche_lr_set)
+    execute_values(cursor, """INSERT INTO dauerauswertung_baustellenbeurteilungspegel (time, pegel, messpunkt_id, berechnet_von_id) VALUES %s""", messpunkt_lr_set)
     # execute_values(cursor, """INSERT INTO tsdb_detected ( time, dauer, messpunkt_id, typ_id, berechnet_von_id) VALUES %s""", detected_set)
     # execute_values(cursor, """INSERT INTO tsdb_maxpegel ( time, pegel, immissionsort_id, berechnet_von_id) VALUES  %s""", maxpegel_set)
     # execute_values(cursor, """INSERT INTO tsdb_schallleistungpegel (time, pegel, messpunkt_id, berechnet_von_id) VALUES %s""", schallleistungspegel_set)
-
 
 
 def insert_new_auswertungslauf(cursor, from_date, to_date, ergebnis: Ergebnisse):

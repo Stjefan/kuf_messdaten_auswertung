@@ -661,7 +661,6 @@ def werte_beurteilungszeitraum_aus(datetime_in_beurteilungszeitraum: datetime, p
         
         
         p = get_project_via_rest(project_name, server_url)
-        print(p)
         lrpegel_set = []
         maxpegel_set = []
         schallleistungspegel_set = []
@@ -674,7 +673,7 @@ def werte_beurteilungszeitraum_aus(datetime_in_beurteilungszeitraum: datetime, p
 
         filtered_and_modified_df, aussortierte_sekunden_mit_grund, detected_set = filter_and_modify_data(p, all_data_df)
 
-        print(aussortierte_sekunden_mit_grund)
+
         for idx, row in aussortierte_sekunden_mit_grund.iterrows():
             rejected_set.append(
                  DTO_Rejected(idx, row[0], row[1])
@@ -707,7 +706,7 @@ def werte_beurteilungszeitraum_aus(datetime_in_beurteilungszeitraum: datetime, p
 
                 result_lr = berechne_pegel_an_io(from_date, to_date, io, laermursachen_an_messpunkten, verwertbare_messwerte_df, p.dict_abf_io_ereignis, rechenwert_verwertbare_sekunden, p.has_mete_data)
 
-                print(p.ursachen_an_ios)
+
                 for col in result_lr.columns:
                     for idx, val in result_lr[col].items():
                         lrpegel_set.append(DTO_LrPegel(idx, val, p.ursachen_an_ios[col]["id"], io.id_in_db))
