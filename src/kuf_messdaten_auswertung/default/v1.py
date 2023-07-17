@@ -12,7 +12,7 @@ from ..constants import get_interval_beurteilungszeitraum_from_datetime, get_id_
 
 
 from ..messdaten.azure import MessdatenServiceV3
-from ..foo import get_project_via_rest # get_resudaten, get_terzdaten, get_metedaten, get_resu_all_mps, get_terz_all_mps, read_mete_data_v1
+from ..to_be_replaced import get_project_via_rest # get_resudaten, get_terzdaten, get_metedaten, get_resu_all_mps, get_terz_all_mps, read_mete_data_v1
 
 import stumpy
 import math
