@@ -12,10 +12,10 @@ def mappe_laermursachen_mp_2_io(projekt_json):
 
 def get_project_via_rest(name: str, server_url: str) -> Projekt:
     custom_zuordnung = {
-        'MP1':  'Unkategorisiert - MP 1', 
-        'MP2': 'Unkategorisiert - MP 2', 'MP3': 'Unkategorisiert - MP 3', 'MP4': 'Unkategorisiert - MP 4', 
-        'MP5-Unkategorisiert': 'Unkategorisiert - MP 5', 'MP5-Vorbeifahrt': 'Vorbeifahrt - MP 5', 
-        'MP6': 'Unkategorisiert - MP 6',
+        'MP1 - Handlingkurs':  'Unkategorisiert - MP 1', 
+        'MP2 - Bertha Leitstand': 'Unkategorisiert - MP 2', 'MP3 - Stadtstraße': 'Unkategorisiert - MP 3', 'MP4 - Innenstadt': 'Unkategorisiert - MP 4', 
+        'MP5 Ovalkurs - Unkategorisiert': 'Unkategorisiert - MP 5', 'MP5 Ovalkurs - Vorbeifahrt': 'Vorbeifahrt - MP 5', 
+        'MP6 - Stadtstraße Heidestrecke': 'Unkategorisiert - MP 6',
         'Gesamt': 'Gesamt'
     }
 
