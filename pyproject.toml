@@ -7,7 +7,7 @@ name = "kuf-messdaten-auswertung"
 authors = [
     {name = "Stefan Scheible", email = "stefan.scheible@kurz-fischer.com"},
 ]
-version = "0.0.22"  # Required
+version = "0.0.24"  # Required
 description = "Dauerauswertung via python"
 
 requires-python = ">=3.7"

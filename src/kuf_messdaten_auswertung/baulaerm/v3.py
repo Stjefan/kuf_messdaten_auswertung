@@ -40,7 +40,7 @@ def svantek_filter_06_23(mp: MesspunktBaulaerm, df_all_data: pd.DataFrame, id_fi
     logger.info(fremdgeraeusche_hoch)
 
     # to_be_kept.loc[fremdgeraeusche_hoch[fremdgeraeusche_hoch].index] = True
-    logger.info("Anzahl Sekunden mit hohem Fremdpegel", fremdgeraeusche_hoch[fremdgeraeusche_hoch])
+    logger.info(f"Anzahl Sekunden mit hohem Fremdpegel {fremdgeraeusche_hoch[fremdgeraeusche_hoch]}")
     io_to_be_kept_dict[mp.id] = fremdgeraeusche_hoch
     fremdgeraeusche_lafeq[mp.id] = df_all_data.loc[fremdgeraeusche_hoch[fremdgeraeusche_hoch].index, f"R{mp.id}_LAFeq"]
     df_all_data.loc[fremdgeraeusche_hoch[fremdgeraeusche_hoch].index, f"R{mp.id}_LAFeq"] = 0
@@ -162,13 +162,18 @@ def erstelle_baulaerm_auswertung_an_mp(zeitpunkt: datetime, mp: MesspunktBaulaer
 
     return result_series
 
-def erstelle_ergebnisse(from_date, arg_mps: List[MesspunktBaulaerm], arg_ios: List[ImmissionsortBaulaerm], laermkategorisierung_an_immissionsorten_reloaded, lr_result_dict, beurteilungsrelevante_taktmaximalpegel_nach_laermursache, rejection_df: pd.DataFrame, number_fully_available_seconds,
+def erstelle_ergebnisse(from_date, arg_mps: List[MesspunktBaulaerm], arg_ios: List[ImmissionsortBaulaerm], laermkategorisierung_an_immissionsorten_reloaded, lr_result_dict, beurteilungsrelevante_taktmaximalpegel_nach_laermursache, rejection_df: dict[str, pd.DataFrame], number_fully_available_seconds,
                         number_non_dropped_seconds, number_counted_seconds, project_id, running_mean_fremdgeraeusche, lr_fremdgeraeusche, lr_messpunkte):
     taktmaximalpegel_list = []
     lr_pegel_list = []
     rejected_list = []
-    for idx, val in rejection_df.iterrows():
-        rejected_list.append(DTO_Rejected(idx, val["filtered_by"]))
+    for mp in arg_mps:
+        current_rejection_df = rejection_df[mp.id]
+        try:
+            for idx, val in current_rejection_df.iterrows():
+                rejected_list.append(DTO_Rejected(idx, val["filtered_by"], mp.id_in_db))
+        except Exception as ex:
+            logger.error(ex)
     # for io in arg_ios:
 
     #     beurteilungspegel_an_io = lr_result_dict[io.id]
@@ -267,6 +272,7 @@ def erstelle_baulaerm_auswertung(
     complete_running_mean_fremdgeraeusche = {}
     complete_lr_fremdgeraeusche = {}
     complete_lr_baustelle = {}
+    complete_filterergebnisse = {}
     for mp in arg_mps:
         try:
             svantek_estimated = m.get_estimated_single(mp, from_date, to_date)
@@ -280,10 +286,11 @@ def erstelle_baulaerm_auswertung(
                 resu,
                 svantek_estimated, left_index=True, right_index=True)
             logger.info(f"Messdaten: f{all_messdaten_joined}")
-            filterergebnisse, all_messdaten_nach_filtern, mittelungspegel_fremgeraeusche = svantek_filter_06_23(mp, all_messdaten_joined,)
+            filterergebnisse_an_messpunkt, all_messdaten_nach_filtern, mittelungspegel_fremgeraeusche = svantek_filter_06_23(mp, all_messdaten_joined,)
+            complete_filterergebnisse[mp.id] = filterergebnisse_an_messpunkt
 
 
-            logger.info(f"Zuordnung Baustelle / Nicht-Baustelle {all_messdaten_nach_filtern}, {filterergebnisse}")
+            logger.info(f"Zuordnung Baustelle / Nicht-Baustelle {all_messdaten_nach_filtern}, {filterergebnisse_an_messpunkt}")
             running_mean_fremdgeraeusche = compute_fremdgeraeusch_mittelungspegel(mittelungspegel_fremgeraeusche, mp)
             complete_running_mean_fremdgeraeusche[mp.id] = running_mean_fremdgeraeusche
             lr_fremdgeraeusche = compute_fremdgeraeusch_lr(mittelungspegel_fremgeraeusche, mp)
@@ -316,7 +323,7 @@ def erstelle_baulaerm_auswertung(
 
             complete_lr_baustelle[mp.id] = beurteilungspegel_an_mp
 
-            filterergebnisse.dropna(inplace=True)
+            filterergebnisse_an_messpunkt.dropna(inplace=True)
         except Exception as ex:
             logger.info(ex)
     erstelle_ergebnisse(
@@ -325,7 +332,7 @@ def erstelle_baulaerm_auswertung(
         [],
         [],
         {}, [],
-        filterergebnisse,
+        complete_filterergebnisse,
         number_fully_available_seconds, number_counted_seconds, number_counted_seconds,
         project_id,
         complete_running_mean_fremdgeraeusche,
