@@ -9,7 +9,7 @@ def get_beurteilungszeitraum_zeitfenster(zeitpunkt: datetime):
                           zeitpunkt.day) + timedelta(hours=-4)
         ende = datetime(zeitpunkt.year, zeitpunkt.month,
                         zeitpunkt.day) + timedelta(hours=7)
-    elif zeitpunkt.hour >= 7 and zeitpunkt.hour <= 20:
+    elif zeitpunkt.hour >= 7 and zeitpunkt.hour < 20:
         beginn = datetime(zeitpunkt.year, zeitpunkt.month,
                           zeitpunkt.day) + timedelta(hours=7)
         ende = datetime(zeitpunkt.year, zeitpunkt.month,
