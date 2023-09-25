@@ -18,7 +18,7 @@ if __name__ == "__main__":
     if True:
         logging.info("Script started")
         year = 2023
-        month = 7
+        month = 8
         for i in range(1, 3+1):
             for ii in [13, 
                        # 23

@@ -15,7 +15,8 @@ from uuid import UUID
 
 
 development_logger = logging.getLogger("development_baulaerm")
-logger = logging.getLogger("baulaerm")
+logger = logging.getLogger("kuf_messdaten_auswertung")
+# logger = logging.getLogger("baulaerm")
 
 def svantek_filter_06_23(mp: MesspunktBaulaerm, df_all_data: pd.DataFrame, id_filter_in_db = "341d5c57-86d2-4e4b-87c8-8331bddea966"):
     s1 = pd.Series(index=df_all_data.index, dtype="int")
