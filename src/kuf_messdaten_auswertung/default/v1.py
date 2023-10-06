@@ -400,14 +400,13 @@ def berechne_schallleistungspegel_an_mp(mp: Messpunkt, pegel_an_mp_df: pd.DataFr
     schallleistungspegel = berechne_schallleistungpegel_an_mp_12_21(
                 mp.id, pegel_an_mp_df, mp.LWA
             )
-    print("Schallleistungpegel:", schallleistungspegel) 
+    logger.debug(f"Schallleistungpegel: {schallleistungspegel}") 
     return schallleistungspegel
 
 def berechne_max_pegel_an_io(io: Immissionsort, lafmax_pegel_an_mps: pd.DataFrame, wind_data_df: pd.DataFrame, mps: list[Messpunkt], abf_data, has_mete):
     cols_lautstaerke_von_verursacher = []
 
 
-    print(abf_data)
     for mp in mps:
         cols_lautstaerke_von_verursacher.append(berechne_hoechste_lautstaerke_an_io_12_21(io, mp, abf_data[(io.Id, mp.Ereignisse[0])], lafmax_pegel_an_mps, has_mete=has_mete))
 
@@ -531,7 +530,7 @@ def load_data(from_date, to_date, my_mps_data: list[Messpunkt], use_terz_data=Tr
             data_as_one = create_complete_df(resu, terz, [], has_mete)
         else:
             data_as_one = create_complete_df(resu, [], [], has_mete, False)
-    print(data_as_one)
+    logger.debug(f"All available data: {data_as_one}")
     return data_as_one
 
 
@@ -546,7 +545,6 @@ def foo(from_date, to_date, ursachen_an_mps):
     dti2 = pd.date_range(from_date, to_date, freq="1s", name="Timestamp")
 
     d = dict(zip(ursachen_an_mps, [15*np.random.rand(int(total_number_seconds)) + 60 for mp in ursachen_an_mps]))
-    # print(d[ursachen_an_mps[0]])
     df2 = pd.DataFrame(data = d, index=dti2)
 
     df2 = df2.loc[df2[ursachen_an_mps[0]] >= 70]
