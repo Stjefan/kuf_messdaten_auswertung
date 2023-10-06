@@ -4,7 +4,7 @@ from .models import Projekt, Koordinaten, Immissionsort, Messpunkt
 
 from uuid import UUID
 
-from .to_be_replaced import logger_config_parser
+from .settings import logger_config_parser
 
 def get_project_via_rest(name: str, server_url: str) -> Projekt:
     custom_zuordnung = {
