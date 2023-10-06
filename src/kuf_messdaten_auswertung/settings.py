@@ -8,3 +8,5 @@ print("CS", CS)
 
 
 logger = logging.getLogger("kufiauswertung")
+
+logger_config_parser = logging.getLogger("configparser")

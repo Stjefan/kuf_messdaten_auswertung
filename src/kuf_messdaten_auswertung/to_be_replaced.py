@@ -4,11 +4,7 @@ from .models import Projekt, Koordinaten, Immissionsort, Messpunkt
 
 from uuid import UUID
 
-def mappe_laermursachen_mp_2_io(projekt_json):
-    print(projekt_json["laermursacheanimmissionsorten_set"])
-    print([e for mp_json in projekt_json['messpunkt_set'] for e in mp_json["laermursacheanmesspunkt_set"]])
-
-    
+from .to_be_replaced import logger_config_parser
 
 def get_project_via_rest(name: str, server_url: str) -> Projekt:
     custom_zuordnung = {
@@ -42,11 +38,12 @@ def get_project_via_rest(name: str, server_url: str) -> Projekt:
     p.raise_for_status()
     projekt_json = p.json()
 
-    print("HELLO", projekt_json)
+
+    logger_config_parser.info(projekt_json)
+
 
     if name == 'Immendingen':
         
-        print(mappe_laermursachen_mp_2_io(projekt_json))
         idx = 0
 
         abfs_json = projekt_json["ausbreitungsfaktoren_set"]
@@ -81,8 +78,8 @@ def get_project_via_rest(name: str, server_url: str) -> Projekt:
         
         return p1
     elif name == 'Mannheim':
-        print(mappe_laermursachen_mp_2_io(projekt_json))
-        idx = 0
+
+
 
         abfs_json = projekt_json["ausbreitungsfaktoren_set"]
 
