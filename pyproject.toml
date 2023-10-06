@@ -7,11 +7,11 @@ name = "kuf-messdaten-auswertung"
 authors = [
     {name = "Stefan Scheible", email = "stefan.scheible@kurz-fischer.com"},
 ]
-version = "0.0.28"  # Required
+version = "0.0.29"  # Required
 description = "Dauerauswertung via python"
 
 requires-python = ">=3.7"
-keywords = ["one", "two"]
+keywords = []
 license = {text = "BSD-3-Clause"}
 classifiers = [
 ]
@@ -22,6 +22,7 @@ dependencies = [
     "sqlalchemy",
     "stumpy",
     "requests",
+    "httpretty,
 
 ]
 

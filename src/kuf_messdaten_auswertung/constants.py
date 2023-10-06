@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
-import logging
-
+from . import logger
 ISOFORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 FORMAT = '%(filename)s %(asctime)s %(message)s'
@@ -81,7 +80,6 @@ def get_key(dict, func):
     raise IOError("Value does not exist")
     
 def get_id_corresponding_beurteilungszeitraum(zeitpunkt: datetime):
-    logging.info(zeitpunkt)
-    print("get_id_corresponding_beurteilungszeitraum", zeitpunkt)
+    logger.info(zeitpunkt)
     second_of_day = zeitpunkt.hour*3600+zeitpunkt.minute*60+zeitpunkt.second
     return get_key(bewertungszeitraum_daten, lambda i: i["Beginn"] <= second_of_day and i["Ende"] >= second_of_day)

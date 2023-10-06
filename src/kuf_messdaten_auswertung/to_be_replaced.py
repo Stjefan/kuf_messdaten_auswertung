@@ -42,6 +42,7 @@ def get_project_via_rest(name: str, server_url: str) -> Projekt:
     p.raise_for_status()
     projekt_json = p.json()
 
+    print("HELLO", projekt_json)
 
     if name == 'Immendingen':
         

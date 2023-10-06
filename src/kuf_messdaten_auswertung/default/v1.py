@@ -21,6 +21,7 @@ import scipy
 from uuid import UUID
 
 
+logger = logging.getLogger("kufiauswertung")
 
 def simple_filter_mp_column_in_measurement_data_12_21(mp_id, column_name_without_prefix, threshold, all_data):
     # no side effects
@@ -46,9 +47,9 @@ def berechne_hoechste_lautstaerke_an_io_12_21(io: Immissionsort, mp: Messpunkt, 
 
 def berechne_schallleistungpegel_an_mp_12_21(mp, df, korrekturfaktor):
     result_df = (df[f"""R{mp}_LAFeq"""].groupby(by=lambda r: r.hour).max() + korrekturfaktor)
-    logging.info(f'TEST: {result_df}')
+    logger.info(f'TEST: {result_df}')
     # result = 10*math.log10(np.power(10, 0.1*df[f"""R{mp}_LAFmax"""]).mean())
-    # logging.debug(f"schallleistungpegel {result} resulting in {result + korrekturfaktor}")
+    # logger.debug(f"schallleistungpegel {result} resulting in {result + korrekturfaktor}")
     return result_df
 
 
@@ -62,38 +63,38 @@ def berechne_beurteilungspegel_an_io_12_21(df, rechenwert_verwertbare_sekunden, 
                 min_el_of_hour = as_energy[as_energy.index.hour == h]["zuschlag"].idxmin()
                 as_energy.loc[pd.to_datetime(min_el_of_hour), "zuschlag"] = as_energy.loc[pd.to_datetime(min_el_of_hour), "zuschlag"] + 10**(6*0.1)
             except ValueError:
-                logging.warning(f"Hour {h} not available")
+                logger.warning(f"Hour {h} not available")
 
     energie_aufsummiert = as_energy.cumsum()
-    logging.debug(f"energie_aufsummiert {energie_aufsummiert}")
+    logger.debug(f"energie_aufsummiert {energie_aufsummiert}")
     energie_aufsummiert["gesamt"] = energie_aufsummiert.sum(axis=1)
     if io.ruhezeitzuschlag:
         energie_aufsummiert = energie_aufsummiert.drop(columns=["zuschlag"], axis=1)
     beurteilungspegel_alle_verursacher_and_gesamt = 10 * np.log10((energie_aufsummiert / rechenwert_verwertbare_sekunden))
     
-    logging.debug(f"beurteilungspegel_alle_verursacher_and_gesamt {beurteilungspegel_alle_verursacher_and_gesamt}")
-    logging.debug(f"beurteilungspegel_alle_verursacher_and_gesamt.columns {beurteilungspegel_alle_verursacher_and_gesamt.columns}")
+    logger.debug(f"beurteilungspegel_alle_verursacher_and_gesamt {beurteilungspegel_alle_verursacher_and_gesamt}")
+    logger.debug(f"beurteilungspegel_alle_verursacher_and_gesamt.columns {beurteilungspegel_alle_verursacher_and_gesamt.columns}")
     return beurteilungspegel_alle_verursacher_and_gesamt
 
 
 
 def berechne_verwertbare_sekunden(df):
     # latest_index = df.index[-1]
-    # logging.debug(f"latest index: {latest_index}")
+    # logger.debug(f"latest index: {latest_index}")
     hours_with_number_values = df.resample('h').size()
-    logging.debug(f"hours_with_number_values: {hours_with_number_values}")
+    logger.debug(f"hours_with_number_values: {hours_with_number_values}")
     hours_with_enough_usable_seconds = hours_with_number_values >= 900
     total_number_usable_seconds = hours_with_number_values[hours_with_number_values >= 900].apply(lambda i: 3600).sum()
-    logging.debug(f"total_number_usable_seconds: {total_number_usable_seconds}")
-    logging.debug(f"hours_with_enough_usable_seconds: {hours_with_enough_usable_seconds}")
+    logger.debug(f"total_number_usable_seconds: {total_number_usable_seconds}")
+    logger.debug(f"hours_with_enough_usable_seconds: {hours_with_enough_usable_seconds}")
     hours_with_less_usable_seconds = hours_with_enough_usable_seconds[-hours_with_enough_usable_seconds]
-    logging.debug(hours_with_less_usable_seconds.index.hour)
+    logger.debug(hours_with_less_usable_seconds.index.hour)
     samplesize_filtered_df = df
     samplesize_deleted = []
     for h in hours_with_less_usable_seconds.index.hour:
         if not samplesize_filtered_df[samplesize_filtered_df.index.hour == h].empty:
             samplesize_deleted.append(samplesize_filtered_df[samplesize_filtered_df.index.hour == h])
-            logging.debug(f"Dropping of hour {h} because there is too few data...")
+            logger.debug(f"Dropping of hour {h} because there is too few data...")
         samplesize_filtered_df = samplesize_filtered_df[samplesize_filtered_df.index.hour != h]
         
     if len(samplesize_deleted) > 0:
@@ -117,11 +118,11 @@ def korrigiere_windeinfluss(winkel_verbindungslinie_mp_io_windrichtung, windgesc
 
 def berechne_windkorrektur_05_21(koordinaten_mp, koordinaten_io, df_mete):
     winkel_io_mp = berechne_winkel_io_mp_12_21(koordinaten_mp, koordinaten_io)
-    # logging.debug(f"Berechneter Winkel: {winkel_io_mp}")
+    # logger.debug(f"Berechneter Winkel: {winkel_io_mp}")
     result = df_mete.apply(lambda i: korrigiere_windeinfluss(
         winkel_io_mp + 180 + i["Windrichtung"], i["MaxWindgeschwindigkeit"]), axis=1)
-    # logging.debug("Windkorrektur")
-    # logging.debug(result.min())
+    # logger.debug("Windkorrektur")
+    # logger.debug(result.min())
     return result
 
 
@@ -129,7 +130,7 @@ def berechne_winkel_io_mp_12_21(koordinaten_mp: Koordinaten, koordinaten_io: Koo
     '''Berechnet den Winkel zwischen arg1 und arg2 aus Sicht der Nordrichtung (gegen den Urzeigersinn)'''
     # aus stackoverflow: direct-way-of-computing-clockwise-angle-between-2-vectors
     # Bemerkung: Skalarprodukt zeigt Richtung mit an, d.h. (Winkel zwischen v0, v1) = - (Winkel zwischen v1, v0)
-    # logging.debug("Winkelberechnung")
+    # logger.debug("Winkelberechnung")
     # v0 = [koordinaten_io["rechtswert"], koordinaten_io["hochwert"]]
     # v1 = [koordinaten_mp["rechtswert"], koordinaten_mp["hochwert"]]
     #
@@ -140,7 +141,7 @@ def berechne_winkel_io_mp_12_21(koordinaten_mp: Koordinaten, koordinaten_io: Koo
                           np.dot(vektor_nach_norden, verbindung_io_mp))
     #
     # return angle  # im Bogenmaß
-    logging.debug(f"{angle} rad, {np.degrees(angle)} °")
+    logger.debug(f"{angle} rad, {np.degrees(angle)} °")
     return np.degrees(angle)
 
 
@@ -167,7 +168,7 @@ def find_vorbeifahrt_mp_5_immendingen(mp: Messpunkt, series) -> list[Vorbeifahrt
     mp_id = mp.id
     vorbeifahrten_container = []
     series.rolling(20).apply(lambda j: erkenne_vorbeifahrt(j, vorbeifahrten_container, mp))
-    logging.debug(f"vorbeifahrten_container {vorbeifahrten_container}")
+    logger.debug(f"vorbeifahrten_container {vorbeifahrten_container}")
     return vorbeifahrten_container
 
 
@@ -339,12 +340,12 @@ def erkenne_vorbeifahrt(param, result_container, mp: Messpunkt):
             max_ergebnis = max(results_bereinigt, key=lambda x: x['difference'])  # Finde das Maximum
             max_ergebnis["wertungsbeginn"] = max_ergebnis["index_beginn_detection"] - delta_time
             max_ergebnis["wertungsende"] = max_ergebnis["index_ende_detection"] + delta_time
-            # logging.debug("Vorbeifahrt erkannt")
+            # logger.debug("Vorbeifahrt erkannt")
             result_container.append(Vorbeifahrt(max_ergebnis["index_beginn_detection"] - delta_time,
                                                 max_ergebnis["index_ende_detection"] + delta_time, mp))
             return 1
             # return param[max_ergebnis['index_left'] : my_argmax + max_ergebnis["index_right"]]
-    # logging.debug("Kein Vorbeifahrt erkannt")
+    # logger.debug("Kein Vorbeifahrt erkannt")
     return 0
 
 
@@ -413,7 +414,7 @@ def berechne_max_pegel_an_io(io: Immissionsort, lafmax_pegel_an_mps: pd.DataFram
     arg_max_index_lautstaerke_io: datetime = df_lauteste_stunde_io_von_mp.max(axis=1).idxmax()
     arg_max_column_lautstaerke_io: str =df_lauteste_stunde_io_von_mp.loc[arg_max_index_lautstaerke_io, :].idxmax()
 
-    logging.info(f"Lautesteter Pegel: {arg_max_index_lautstaerke_io}, {arg_max_column_lautstaerke_io}, {df_lauteste_stunde_io_von_mp.loc[arg_max_index_lautstaerke_io, arg_max_column_lautstaerke_io]}")
+    logger.info(f"Lautesteter Pegel: {arg_max_index_lautstaerke_io}, {arg_max_column_lautstaerke_io}, {df_lauteste_stunde_io_von_mp.loc[arg_max_index_lautstaerke_io, arg_max_column_lautstaerke_io]}")
 
     return arg_max_index_lautstaerke_io, arg_max_column_lautstaerke_io, df_lauteste_stunde_io_von_mp.loc[arg_max_index_lautstaerke_io, arg_max_column_lautstaerke_io]
 
@@ -461,7 +462,7 @@ def berechne_pegel_an_io(from_date, to_date, io: Immissionsort, laerm_nach_ursac
 
     
     result_df = pd.merge(df_all, df_gesamt_lr, left_index=True, right_index=True)
-    logging.debug(result_df)
+    logger.debug(result_df)
     return result_df
 
 def create_laermursachen_df(all_data_df: pd.DataFrame, mps: list[Messpunkt], from_date: datetime, to_date: datetime, detected_set: list[DTO_Detected]):
@@ -488,7 +489,7 @@ def create_laermursachen_df(all_data_df: pd.DataFrame, mps: list[Messpunkt], fro
                 s_mit_vorbeifahrt.loc[-vorbeifahrten_an_mp_indicator_series] = 0
 
                 for d in vorbeifahrten_list:
-                    logging.info(f"Vorbeifahrt at {d.beginn}")
+                    logger.info(f"Vorbeifahrt at {d.beginn}")
                     detected_set.append(DTO_Detected(d.beginn, int((d.ende-d.beginn).total_seconds()), mp.id_in_db))
 
                 cols_laerm.append(s_ohne_vorbeifahrt)
@@ -567,22 +568,22 @@ def foo(from_date, to_date, ursachen_an_mps):
 
 
 
-def filter_and_modify_data(p: Projekt, all_data_df: pd.DataFrame):
+def filter_and_modify_data(p: Projekt, all_data_df: pd.DataFrame, use_terz = True):
 
     my_mps_data: list[Messpunkt] = p.MPs
     has_mete: bool = p.has_mete_data
     lafeq_gw = 90
     lafmax_gw = 100
     lcfeq_gw = 110
-    use_terz_data = True
+    use_terz_data = use_terz
 
     messwerte_nach_filtern_df = all_data_df
-    logging.info(f"Vor Filtern {len(messwerte_nach_filtern_df)}")
+    logger.info(f"Vor Filtern {len(messwerte_nach_filtern_df)}")
 
     s1 = pd.Series(index=all_data_df.index, dtype="int")
     s2 = pd.Series(index=all_data_df.index, dtype="int")
     filter_result_df = pd.DataFrame(data={"ursache": s1, "messpunkt_id": s2})
-    logging.info(f"filter_result_df {filter_result_df}")
+    logger.info(f"filter_result_df {filter_result_df}")
     found_detections = []
     if has_mete:
         
@@ -591,12 +592,12 @@ def filter_and_modify_data(p: Projekt, all_data_df: pd.DataFrame):
         messwerte_nach_filtern_df = messwerte_nach_filtern_df[-ausortiert_by_windfilter]
         filter_result_df.loc[ausortiert_by_windfilter[ausortiert_by_windfilter].index, :] = [p.filter_mit_ids["Wind"]["id"], my_mps_data[0].id_in_db]
 
-        logging.debug(f"Nach Windfilter: {len(messwerte_nach_filtern_df)}")
+        logger.debug(f"Nach Windfilter: {len(messwerte_nach_filtern_df)}")
         ausortiert_by_regen = filter_regen_12_21(messwerte_nach_filtern_df)
         messwerte_nach_filtern_df = messwerte_nach_filtern_df[-ausortiert_by_regen]
         filter_result_df.loc[ausortiert_by_regen[ausortiert_by_regen].index, :] = [p.filter_mit_ids["Regen"]["id"], my_mps_data[0].id_in_db]
         # my_results_filter["regen"] = [] #ausortiert_by_regen[ausortiert_by_regen]
-        logging.debug(f"Nach Regenfilter: {len(messwerte_nach_filtern_df)}")
+        logger.debug(f"Nach Regenfilter: {len(messwerte_nach_filtern_df)}")
     if True:
         
             for mp in my_mps_data:
@@ -618,12 +619,12 @@ def filter_and_modify_data(p: Projekt, all_data_df: pd.DataFrame):
                             messwerte_nach_filtern_df = messwerte_nach_filtern_df.loc[(messwerte_nach_filtern_df.index < d.start) | (messwerte_nach_filtern_df.index > d.end)]
                             filter_result_df.loc[(filter_result_df.index >= d.start) & (filter_result_df.index <= d.end), :] = [p.filter_mit_ids["Zug"]["id"], mp.id_in_db]
 
-                    logging.info(f"Nach Zugfilter: {len(messwerte_nach_filtern_df)}")
-                    logging.info(f"Len(found_detections): {len(found_detections)}")
+                    logger.info(f"Nach Zugfilter: {len(messwerte_nach_filtern_df)}")
+                    logger.info(f"Len(found_detections): {len(found_detections)}")
             if use_terz_data:
                 aussortiert_by_vogelfilter = filter_vogel_12_21(mp.id, messwerte_nach_filtern_df)
                 
-                # logging.debug(f"aussortiert_by_vogelfilter {aussortiert_by_vogelfilter}")
+                # logger.debug(f"aussortiert_by_vogelfilter {aussortiert_by_vogelfilter}")
                 messwerte_nach_filtern_df = messwerte_nach_filtern_df[aussortiert_by_vogelfilter]
                 filter_result_df.loc[aussortiert_by_vogelfilter[-aussortiert_by_vogelfilter].index, :] = [p.filter_mit_ids["Vogel"]["id"], mp.id_in_db]
                 # my_results_filter[f"vogelMp{mp.id}"] = [] # aussortiert_by_vogelfilter[-aussortiert_by_vogelfilter]
@@ -634,29 +635,29 @@ def filter_and_modify_data(p: Projekt, all_data_df: pd.DataFrame):
                         messwerte_nach_filtern_df.loc[
                             modifizierte_pegel_wegen_grillen.index, f"""R{mp.id}_LAFeq"""]\
                             = modifizierte_pegel_wegen_grillen
-                        logging.debug(modifizierte_pegel_wegen_grillen)
+                        logger.debug(modifizierte_pegel_wegen_grillen)
     filter_result_df.dropna(inplace=True)
-    logging.info(f"Nach Filtern: {len(messwerte_nach_filtern_df)}, {len(filter_result_df)}")
+    logger.info(f"Nach Filtern: {len(messwerte_nach_filtern_df)}, {len(filter_result_df)}")
     return messwerte_nach_filtern_df, filter_result_df, found_detections
 
 
 
 def bestimme_rechenwert_verwertbare_sekunden(messwerte_nach_filtern_df):
     anzahl_verwertbare_sekunden, verwertbare_messwerte_df, aussortiert_wegen_sample_size = berechne_verwertbare_sekunden(messwerte_nach_filtern_df)
-    # logging.debug(f"aussortiert_wegen_sample_size: {aussortiert_wegen_sample_size}")
-    logging.debug(f"Verwertbare Sekunden (Rechenwert): {anzahl_verwertbare_sekunden}")
+    # logger.debug(f"aussortiert_wegen_sample_size: {aussortiert_wegen_sample_size}")
+    logger.debug(f"Verwertbare Sekunden (Rechenwert): {anzahl_verwertbare_sekunden}")
 
     return verwertbare_messwerte_df, anzahl_verwertbare_sekunden
 
 
-def werte_beurteilungszeitraum_aus(datetime_in_beurteilungszeitraum: datetime, project_name: str, server_url: str):
+def werte_beurteilungszeitraum_aus(datetime_in_beurteilungszeitraum: datetime, project_name: str, server_url: str, use_terz = True):
     
     from_date,to_date = get_start_end_beurteilungszeitraum_from_datetime(datetime_in_beurteilungszeitraum)
 
     from_date_data_vorhanden = from_date # + timedelta(seconds=5)
     to_date_data_vorhanden = to_date # - timedelta(seconds=5)
 
-    logging.info(f"{from_date}, {to_date}")    
+    logger.info(f"{from_date}, {to_date}")    
     if True:
         
         
@@ -667,11 +668,11 @@ def werte_beurteilungszeitraum_aus(datetime_in_beurteilungszeitraum: datetime, p
         rejected_set = []
         detected_set = []
 
-        all_data_df = load_data(from_date_data_vorhanden, to_date_data_vorhanden, p.MPs, True, p.has_mete_data)
+        all_data_df = load_data(from_date_data_vorhanden, to_date_data_vorhanden, p.MPs, use_terz, p.has_mete_data)
 
         number_seconds_with_all_measurements = len(all_data_df)
 
-        filtered_and_modified_df, aussortierte_sekunden_mit_grund, detected_set = filter_and_modify_data(p, all_data_df)
+        filtered_and_modified_df, aussortierte_sekunden_mit_grund, detected_set = filter_and_modify_data(p, all_data_df, use_terz)
 
 
         for idx, row in aussortierte_sekunden_mit_grund.iterrows():
@@ -684,10 +685,10 @@ def werte_beurteilungszeitraum_aus(datetime_in_beurteilungszeitraum: datetime, p
         number_seconds_with_evaluatable_measurements = len(verwertbare_messwerte_df)
 
         if rechenwert_verwertbare_sekunden == 0:
-            logging.info("Keine nutzbaren Messdaten vorhanden")
+            logger.info("Keine nutzbaren Messdaten vorhanden")
 
         else:
-            logging.info("Erstelle Auswertung auf Basis der verwertbaren Messdaten")
+            logger.info("Erstelle Auswertung auf Basis der verwertbaren Messdaten")
 
             laermursachen_an_messpunkten = create_laermursachen_df(verwertbare_messwerte_df, p.MPs, from_date, to_date, detected_set)
 
@@ -700,7 +701,7 @@ def werte_beurteilungszeitraum_aus(datetime_in_beurteilungszeitraum: datetime, p
 
             for io in p.IOs:
                 zeitpunkt_maxpegel_an_io, ursache_maxpegel_an_io, maxpegel_an_io = berechne_max_pegel_an_io(io, verwertbare_messwerte_df, verwertbare_messwerte_df, p.MPs, p.dict_abf_io_ereignis, p.has_mete_data)
-                # logging.info(ursache_maxpegel_an_io, zeitpunkt_maxpegel_an_io, maxpegel_an_io)
+                # logger.info(ursache_maxpegel_an_io, zeitpunkt_maxpegel_an_io, maxpegel_an_io)
                 maxpegel_set.append(DTO_Maxpegel(zeitpunkt_maxpegel_an_io, maxpegel_an_io, io.id_in_db))
                 
 
@@ -730,9 +731,9 @@ if __name__ == "__main__":
         ]
     )
     if False:
-        werte_beurteilungszeitraum_aus(datetime.now(), "immendingen")
+        werte_beurteilungszeitraum_aus(datetime.now(), "immendingen", "localhost:8000")
     if True:
-        werte_beurteilungszeitraum_aus(datetime(2023, 1, 25, 2, 15, 0), "umspannwerk")
+        werte_beurteilungszeitraum_aus(datetime(2023, 1, 25, 2, 15, 0), "umspannwerk", "localhost:8000")
 
 
 
