@@ -22,7 +22,7 @@ dependencies = [
     "sqlalchemy",
     "stumpy",
     "requests",
-    "httpretty,
+    "httpretty",
 
 ]
 
