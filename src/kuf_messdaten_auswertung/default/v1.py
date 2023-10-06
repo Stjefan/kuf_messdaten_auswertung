@@ -20,8 +20,9 @@ import scipy
 
 from uuid import UUID
 
+from ..settings import CS, logger
 
-logger = logging.getLogger("kufiauswertung")
+
 
 def simple_filter_mp_column_in_measurement_data_12_21(mp_id, column_name_without_prefix, threshold, all_data):
     # no side effects
@@ -513,9 +514,10 @@ def create_rechenwert_column(column: pd.Series, new_name: str):
 def load_data(from_date, to_date, my_mps_data: list[Messpunkt], use_terz_data=True, has_mete=True):
     m = MessdatenServiceV3("postgresql://stjefan2:p057!Gres@kufi-postgres13.postgres.database.azure.com/foo3") # MessdatenServiceV3() # RandomMessdatenService() #
     # dirs = m.get_dir_all_mps(my_mps_data, from_date, to_date)
+    resu =m.get_resu_all_mps(my_mps_data, from_date, to_date)
     if use_terz_data:
         terz = m.get_terz_all_mps(my_mps_data, from_date, to_date)
-        resu =m.get_resu_all_mps(my_mps_data, from_date, to_date)
+        
   
     if has_mete:
         mp_metetstation = [mp for mp in my_mps_data if mp.id_in_db == UUID("50f6a165-3f76-4d26-9f55-1d559e0e6fc8")][0]
