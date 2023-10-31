@@ -519,7 +519,8 @@ def load_data(from_date, to_date, my_mps_data: list[Messpunkt], use_terz_data=Tr
         
   
     if has_mete:
-        mp_metetstation = [mp for mp in my_mps_data if mp.id_in_db == UUID("50f6a165-3f76-4d26-9f55-1d559e0e6fc8")][0]
+        mp_metetstation = [mp for mp in my_mps_data if (
+            mp.id_in_db == UUID("50f6a165-3f76-4d26-9f55-1d559e0e6fc8") or mp.id_in_db == UUID("31b773b9-bc96-4363-9af4-38304894ceba"))][0]
         mete = m.get_metedaten(mp_metetstation, from_date, to_date)
         if use_terz_data:
             data_as_one = create_complete_df(resu, terz, mete, has_mete)
@@ -572,8 +573,8 @@ def filter_and_modify_data(p: Projekt, all_data_df: pd.DataFrame, use_terz = Tru
 
     my_mps_data: list[Messpunkt] = p.MPs
     has_mete: bool = p.has_mete_data
-    lafeq_gw = 90
-    lafmax_gw = 100
+    lafeq_gw = 80
+    lafmax_gw = 90
     lcfeq_gw = 110
     use_terz_data = use_terz
 

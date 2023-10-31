@@ -58,6 +58,7 @@ class Messpunkt:
     einstellungen_richtunsdaten: Optional[EinstellungenRichtungsdaten] = None
     
     
+    
 @dataclass
 class LaermkategorisierungMesspunkt:
     id: UUID

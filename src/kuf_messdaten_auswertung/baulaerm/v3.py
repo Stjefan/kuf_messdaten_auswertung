@@ -16,7 +16,6 @@ from uuid import UUID
 
 development_logger = logging.getLogger("development_baulaerm")
 logger = logging.getLogger("kuf_messdaten_auswertung")
-# logger = logging.getLogger("baulaerm")
 
 def svantek_filter_06_23(mp: MesspunktBaulaerm, df_all_data: pd.DataFrame, id_filter_in_db = "341d5c57-86d2-4e4b-87c8-8331bddea966"):
     s1 = pd.Series(index=df_all_data.index, dtype="int")
@@ -62,12 +61,11 @@ def random_filter(alle_messdaten: pd.DataFrame, id_unsepcfic_filter: str = "7289
 
     rand_arr = (np.random.rand(len(alle_messdaten)) - 0.0) >= 0
     result = alle_messdaten[rand_arr]
-    print("Before:", len(alle_messdaten), "After", len(result))
+
     reason_for_dropping = pd.DataFrame(index=alle_messdaten.index)
 
     reason_for_dropping.loc[~rand_arr, ["filtered_by", "messpunkt"]] = (
         id_unsepcfic_filter, 0)
-    print(reason_for_dropping)
     return result, reason_for_dropping
 
 def erstelle_pegel_nach_laermursache(an_messpunkten_gemessene_werte: pd.DataFrame, mp: MesspunktBaulaerm):
@@ -132,18 +130,29 @@ def erstelle_baulaerm_auswertung_an_io(zeitpunkt: datetime, io: Immissionsort, b
 
     return result_df
 
+def get_rechenwert_verwertbare_sekunden(beginn: datetime, ende: datetime, df: pd.DataFrame):
+        
+    last_available_timestamp = df.index[-1]
+
+    total_seconds_in_beurteilungszeitraum = (ende-beginn).total_seconds()
+    rechenwert_verwertbare_sekunden = len(df)
+
+    anteil_available_seconds = rechenwert_verwertbare_sekunden/(last_available_timestamp-beginn).total_seconds()
+    logger.info(f"Last: {last_available_timestamp}")
+    logger.info(f"Anteil: {anteil_available_seconds}")
+
+    hochgerechneter_anteil = total_seconds_in_beurteilungszeitraum * anteil_available_seconds
+
+    return hochgerechneter_anteil
 
 def erstelle_baulaerm_auswertung_an_mp(zeitpunkt: datetime, mp: MesspunktBaulaerm, df: pd.DataFrame):
     beginn, ende = get_beurteilungszeitraum_zeitfenster(zeitpunkt)
-
-
-    rechenwert_verwertbare_sekunden = len(df)
-
+    hochgerechneter_anteil = get_rechenwert_verwertbare_sekunden(beginn, ende, df)
     dti3 = pd.date_range(beginn, ende, freq="5s", name="Timestamp")
     df3 = pd.DataFrame(index=dti3)
 
     df_filled_holes = df3.merge(10**(0.1*df[f"R{mp.id}_LAFeq"]) /
-                                rechenwert_verwertbare_sekunden, how='left', left_index=True, right_index=True)
+                                hochgerechneter_anteil, how='left', left_index=True, right_index=True)
     df_filled_holes.fillna(0, inplace=True)
 
 
@@ -247,8 +256,10 @@ def erstelle_ergebnisse(from_date, arg_mps: List[MesspunktBaulaerm], arg_ios: Li
     insert_baulaermauswertung_via_psycopg2(from_date, results)
 
 
-def compute_fremdgeraeusch_lr(pegel_fremgeraeusche, mp: MesspunktBaulaerm):
-    lr_fremdgeraeusch = 10*np.log10((10**(0.1*pegel_fremgeraeusche[mp.id])).cumsum().resample('5min').max()) - 10 * np.log10(len(pegel_fremgeraeusche[mp.id]))
+def compute_fremdgeraeusch_lr(zeitpunkt: datetime, pegel_fremgeraeusche: dict[str, pd.DataFrame], mp: MesspunktBaulaerm):
+    beginn, ende = get_beurteilungszeitraum_zeitfenster(zeitpunkt)
+    rechenwert_verwertbare_sekunden = get_rechenwert_verwertbare_sekunden(beginn, ende, pegel_fremgeraeusche[mp.id]) # len(pegel_fremgeraeusche[mp.id])
+    lr_fremdgeraeusch = 10*np.log10((10**(0.1*pegel_fremgeraeusche[mp.id])).cumsum().resample('5min').max()) - 10 * np.log10(rechenwert_verwertbare_sekunden)
     logger.info(f"Fremdgeräusch-Beurteilungspegel {lr_fremdgeraeusch}")
     return lr_fremdgeraeusch
 
@@ -262,7 +273,7 @@ def compute_fremdgeraeusch_mittelungspegel(mittelungspegel_fremgeraeusche, mp: M
     return running_mean_fremdgeraeusche
 
 def erstelle_baulaerm_auswertung(
-        arg_mps: List[MesspunktBaulaerm], zeitpunkt_im_zielreitraum, project_id):
+        arg_mps: List[MesspunktBaulaerm], zeitpunkt_im_zielreitraum, project_id, database_insert = True):
     from_date, to_date = get_beurteilungszeitraum_zeitfenster(
         zeitpunkt_im_zielreitraum)
     logger.info(f"Baulaerm-Auswertung von {from_date} bis {to_date}")
@@ -294,14 +305,11 @@ def erstelle_baulaerm_auswertung(
             logger.info(f"Zuordnung Baustelle / Nicht-Baustelle {all_messdaten_nach_filtern}, {filterergebnisse_an_messpunkt}")
             running_mean_fremdgeraeusche = compute_fremdgeraeusch_mittelungspegel(mittelungspegel_fremgeraeusche, mp)
             complete_running_mean_fremdgeraeusche[mp.id] = running_mean_fremdgeraeusche
-            lr_fremdgeraeusche = compute_fremdgeraeusch_lr(mittelungspegel_fremgeraeusche, mp)
+            lr_fremdgeraeusche = compute_fremdgeraeusch_lr(zeitpunkt_im_zielreitraum, mittelungspegel_fremgeraeusche, mp)
             complete_lr_fremdgeraeusche[mp.id] = lr_fremdgeraeusche
-
             
             #messwerte_nach_filtern, filterergebnisse = random_filter(
             #     all_messdaten_joined)
-
-            
 
             number_fully_available_seconds = len(all_messdaten_joined)
             number_counted_seconds = len(all_messdaten_nach_filtern)
@@ -313,31 +321,27 @@ def erstelle_baulaerm_auswertung(
             # beurteilungsrelevante_taktmaximalpegel_nach_laermursache = erstelle_beurteilungsrelevante_pegel(
             #     pegel_nach_laermursache, mp)
 
-
             # for io in arg_ios:
             #     beurteilungspegel_an_io = erstelle_baulaerm_auswertung_an_io(zeitpunkt_im_zielreitraum, io, beurteilungsrelevante_taktmaximalpegel_nach_laermursache, [
             #                                                                     ausbreitungsfaktoren[(io.id, mp.id)] for mp in arg_mps for k in mp.ereignisse])
             #     lr_dict[io.id] = beurteilungspegel_an_io
-
-            
             beurteilungspegel_an_mp = erstelle_baulaerm_auswertung_an_mp(zeitpunkt_im_zielreitraum, mp, all_messdaten_nach_filtern)
-
             complete_lr_baustelle[mp.id] = beurteilungspegel_an_mp
-
             filterergebnisse_an_messpunkt.dropna(inplace=True)
         except Exception as ex:
             logger.info(ex)
-    erstelle_ergebnisse(
-        zeitpunkt_im_zielreitraum,
-        arg_mps,
-        [],
-        [],
-        {}, [],
-        complete_filterergebnisse,
-        number_fully_available_seconds, number_counted_seconds, number_counted_seconds,
-        project_id,
-        complete_running_mean_fremdgeraeusche,
-        complete_lr_fremdgeraeusche,
-        complete_lr_baustelle
-    )
+    if database_insert:
+        erstelle_ergebnisse(
+            zeitpunkt_im_zielreitraum,
+            arg_mps,
+            [],
+            [],
+            {}, [],
+            complete_filterergebnisse,
+            number_fully_available_seconds, number_counted_seconds, number_counted_seconds,
+            project_id,
+            complete_running_mean_fremdgeraeusche,
+            complete_lr_fremdgeraeusche,
+            complete_lr_baustelle
+        )
 
